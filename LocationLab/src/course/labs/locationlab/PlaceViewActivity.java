@@ -3,6 +3,7 @@ package course.labs.locationlab;
 import java.util.ArrayList;
 
 import android.app.ListActivity;
+import android.content.Context;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -36,6 +37,7 @@ public class PlaceViewActivity extends ListActivity implements LocationListener 
 	private MockLocationProvider mMockLocationProvider;
 
 	private TextView mFooterView;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -54,6 +56,8 @@ public class PlaceViewActivity extends ListActivity implements LocationListener 
 				R.layout.footer_view, getListView(), false);
 
 		getListView().addFooterView(mFooterView);
+
+		mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
 		// TODO - When the footerView's onClick() method is called, it must
 		// issue the
@@ -120,19 +124,16 @@ public class PlaceViewActivity extends ListActivity implements LocationListener 
 
 		// TODO - Check NETWORK_PROVIDER for an existing location reading.
 		// Only keep this last reading if it is fresh - less than 5 minutes old.
-		Location mlocationNet = mLocationManager
-				.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-		if (null != mlocationNet) {
-			mMinTime = mlocationNet.getTime();
-		}
-		if (age(mlocationNet) < FIVE_MINS) {
-			mLastLocationReading = mlocationNet;
+
+		if (mLastLocationReading != null
+				&& age(mLastLocationReading) < FIVE_MINS) {
+			mLastLocationReading = mLocationManager
+					.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 		}
 
 		// TODO - register to receive location updates from NETWORK_PROVIDER
 		mLocationManager.requestLocationUpdates(
-				LocationManager.NETWORK_PROVIDER, mMinTime, mMinDistance,
-				this);
+				LocationManager.NETWORK_PROVIDER, mMinTime, mMinDistance, this);
 	}
 
 	@Override
@@ -141,7 +142,9 @@ public class PlaceViewActivity extends ListActivity implements LocationListener 
 		mMockLocationProvider.shutdown();
 
 		// TODO - unregister for location updates
+		mLocationManager.removeUpdates(this);
 
+		
 		super.onPause();
 	}
 
@@ -163,6 +166,14 @@ public class PlaceViewActivity extends ListActivity implements LocationListener 
 		// the current location
 		// 3) If the current location is newer than the last locations, keep the
 		// current location.
+		if (mLastLocationReading == null
+				|| this.age(mLastLocationReading) > this.age(currentLocation))
+
+		{
+
+			mLastLocationReading = currentLocation;
+
+		}
 
 	}
 
